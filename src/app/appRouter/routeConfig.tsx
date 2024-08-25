@@ -6,6 +6,7 @@ import CreateAProductCard from '../../components/pages/CAPC';
 import CourserCreate from '../../components/pages/CC';
 import CourseTemplate from '../../components/pages/CT';
 import SuccessBuy from '../../components/pages/SB';
+import MyShopping from '../../components/pages/MS';
 
 export enum AppRoutes {
   Home = 'home',
@@ -15,6 +16,7 @@ export enum AppRoutes {
   CourserCreate = 'cc',
   CourseTemplate = 'ct',
   SuccessBuy = 'sb',
+  MyShopping = 'ms',
 }
 
 export const routePaths: Record<AppRoutes, string> = {
@@ -25,6 +27,7 @@ export const routePaths: Record<AppRoutes, string> = {
   [AppRoutes.CourserCreate]: '/cc',
   [AppRoutes.CourseTemplate]: '/ct',
   [AppRoutes.SuccessBuy]: '/sb',
+  [AppRoutes.MyShopping]: '/ms',
 };
 
 export const routerConfig: Record<AppRoutes, RouteObject> = {
@@ -55,5 +58,9 @@ export const routerConfig: Record<AppRoutes, RouteObject> = {
   [AppRoutes.SuccessBuy]: {
     path: routePaths[AppRoutes.SuccessBuy],
     element: <SuccessBuy />,
+  },
+  [AppRoutes.MyShopping]: {
+    path: routePaths[AppRoutes.MyShopping],
+    element: <MyShopping />,
   },
 };

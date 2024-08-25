@@ -5,25 +5,25 @@ export default function WhatDidISell() {
   const CardForSell = () => {
     return (
       <div className="p-4">
-        <div className="flex items-center p-2 rounded-xl bg-black">
-          <div className="flex items-center justify-center w-24 h-16 bg-pink-500 rounded-lg">
+        <div className="flex flex-col lg:flex-row items-center p-2 rounded-xl bg-black">
+          <div className="flex items-center justify-center w-full lg:w-24 h-16 bg-pink-500 rounded-lg mb-4 lg:mb-0">
             <span className="text-white">ИКОНКА</span>
           </div>
-          <div className="flex-grow mx-2 h-16 bg-gray-500 rounded-lg flex items-center justify-center">
+          <div className="flex-grow mx-2 h-16 bg-gray-500 rounded-lg flex items-center justify-center mb-4 lg:mb-0">
             <span className="text-white">ОПИСАНИЕ</span>
           </div>
-          <div className="mx-2 flex items-center justify-center w-24 h-16 bg-green-400 rounded-full">
+          <div className="mx-2 flex items-center justify-center w-full lg:w-24 h-16 bg-green-400 rounded-full mb-4 lg:mb-0">
             <span className="text-white text-center">СКРЫТО/ПРОДАЕТСЯ</span>
           </div>
-          <div className="mx-2 flex items-center justify-center w-24 h-16 bg-gray-500 rounded-lg">
+          <div className="mx-2 flex items-center justify-center w-full lg:w-24 h-16 bg-gray-500 rounded-lg mb-4 lg:mb-0">
             <span className="text-white text-center">15 ПРОДАЖ</span>
           </div>
-          <div className="mx-2 flex items-center justify-center w-24 h-16 bg-gray-500 rounded-lg">
+          <div className="mx-2 flex items-center justify-center w-full lg:w-24 h-16 bg-gray-500 rounded-lg mb-4 lg:mb-0">
             <span className="text-white text-center">5000Р</span>
           </div>
           <Button
             type="primary"
-            className="ml-2 w-24 h-16 rounded-lg bg-green-500"
+            className="ml-2 w-full lg:w-24 h-16 rounded-lg bg-green-500"
           >
             ВЫВОД
           </Button>
@@ -31,6 +31,7 @@ export default function WhatDidISell() {
       </div>
     );
   };
+
   return (
     <main>
       <br />

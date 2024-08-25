@@ -7,7 +7,7 @@ export default function CreateAProductCard() {
     <main>
       <br />
       <div className="allCards flex flex-col items-center gap-10">
-        <div className="relative w-[850px] h-28 border-4 border-gray-700 rounded-3xl flex text-center items-center justify-center">
+        <div className="relative w-full max-w-[850px] h-28 border-4 border-gray-700 rounded-3xl flex text-center items-center justify-center">
           <p>ДОБАВИТЬ ШАПКУ КУРСА +</p>
           <Button
             type="primary"
@@ -16,7 +16,7 @@ export default function CreateAProductCard() {
             className="absolute top-0 right-0"
           />
         </div>
-        <div className="relative w-[850px] h-28 border-4 border-gray-700 rounded-3xl flex text-center items-center justify-center">
+        <div className="relative w-full max-w-[850px] h-28 border-4 border-gray-700 rounded-3xl flex text-center items-center justify-center">
           <p>ДОБАВИТЬ НАЗВАНИЕ КУРСА +</p>
           <Button
             type="primary"
@@ -25,8 +25,8 @@ export default function CreateAProductCard() {
             className="absolute top-0 right-0"
           />
         </div>
-        <div className="flex justify-between gap-4">
-          <div className="relative w-[520px] h-60 border-4 border-gray-700 rounded-3xl flex text-center items-center justify-center">
+        <div className="flex flex-col lg:flex-row justify-center gap-4 w-full">
+          <div className="relative w-full lg:w-[520px] h-60 border-4 border-gray-700 rounded-3xl flex text-center items-center justify-center">
             <p>ДОБАВИТЬ ОПИСАНИЕ КУРСА +</p>
             <Button
               type="primary"
@@ -35,7 +35,7 @@ export default function CreateAProductCard() {
               className="absolute top-0 right-0"
             />
           </div>
-          <div className="relative w-[310px] h-60 border-4 border-gray-700 rounded-3xl flex text-center items-center justify-center">
+          <div className="relative w-full lg:w-[310px] h-60 border-4 border-gray-700 rounded-3xl flex text-center items-center justify-center">
             <p>ДОБАВИТЬ ПРАЙС</p>
             <Button
               type="primary"
@@ -45,7 +45,7 @@ export default function CreateAProductCard() {
             />
           </div>
         </div>
-        <div className="relative w-[850px] h-60 border-4 border-gray-700 rounded-3xl flex text-center items-center justify-center">
+        <div className="relative w-full max-w-[850px] h-60 border-4 border-gray-700 rounded-3xl flex text-center items-center justify-center">
           <p>ДОБАВИТЬ РАБОТЫ АВТОРА +++</p>
           <Button
             type="primary"
@@ -54,11 +54,11 @@ export default function CreateAProductCard() {
             className="absolute top-0 right-0"
           />
         </div>
-        <div className="flex justify-center gap-6">
-          <Button className="w-[220px] h-[70px] rounded-xl bg-gray-700">
+        <div className="flex flex-col lg:flex-row justify-center gap-6 w-full">
+          <Button className="w-full lg:w-[220px] h-[70px] rounded-xl bg-gray-700">
             <Link to={'/ct'}>ПРЕВЬЮ</Link>
           </Button>
-          <Button className="w-[220px] h-[70px] rounded-xl bg-gray-700">
+          <Button className="w-full lg:w-[220px] h-[70px] rounded-xl bg-gray-700">
             <Link to={'/cc'}>ПЕРЕЙТИ К СОЗДАНИЮ КУРСА</Link>
           </Button>
         </div>

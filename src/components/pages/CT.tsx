@@ -17,7 +17,10 @@ export default function CourseTemplate() {
   return (
     <>
       <div className="container mx-auto p-4 space-y-11">
-        <div className="rounded-xl bg-gray-700 text-white h-60 p-8 text-center relative">
+        <div
+          style={{ backgroundImage: 'url(/Shapka.png)' }}
+          className="rounded-xl text-white h-60 p-8 text-center relative bg-cover bg-center"
+        >
           <p className="text-2xl">ШАПКА КУРСА</p>
           <div className="absolute h-12 transform -translate-x-1/2 translate-y-40 bg-pink-500 text-white rounded-full py-2 px-4 left-1/2">
             Модуль обратной связи и поддержка
