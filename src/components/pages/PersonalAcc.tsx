@@ -1,8 +1,28 @@
 import { CameraOutlined, EditOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
+import { Button, Card, Modal } from 'antd';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 export default function PersonalAcc() {
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedPayment, setSelectedPayment] = useState<string>('');
+
+  const showModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleOk = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+  };
+
+  const handlePaymentChange = (e: string) => {
+    setSelectedPayment(e);
+  };
+
   return (
     <main className="px-4 md:px-8">
       <br />
@@ -86,7 +106,10 @@ export default function PersonalAcc() {
                 ЧЕ Я ПРОДАЛ
               </div>
             </Link>
-            <div className="border-4 flex items-center justify-center h-36 sm:h-40 lg:h-48 w-[220px] sm:w-[250px] lg:w-[290px] border-gray-700 rounded-3xl">
+            <div
+              onClick={() => showModal()}
+              className="border-4 flex items-center justify-center h-36 sm:h-40 lg:h-48 w-[220px] sm:w-[250px] lg:w-[290px] border-gray-700 rounded-3xl cursor-pointer"
+            >
               СПОСОБ ОПЛАТЫ
             </div>
           </div>
@@ -95,6 +118,53 @@ export default function PersonalAcc() {
       <footer className="mt-20 lg:mt-28 flex justify-center h-36 sm:h-40 lg:h-48 items-center border-4 border-gray-700 rounded-3xl">
         <span>ПОДВАЛ</span>
       </footer>
+      <Modal
+        title="Выберите способ оплаты"
+        open={isModalOpen}
+        onOk={handleOk}
+        onCancel={handleCancel}
+        okText="Сохранить"
+        cancelText="Отмена"
+      >
+        <div className="grid grid-cols-2 gap-4">
+          <Card
+            className={`cursor-pointer ${
+              selectedPayment === 'creditCard' ? 'border-blue-500' : ''
+            }`}
+            onClick={() => handlePaymentChange('creditCard')}
+            bordered={selectedPayment === 'creditCard'}
+          >
+            <p>Кредитная карта</p>
+          </Card>
+          <Card
+            className={`cursor-pointer ${
+              selectedPayment === 'paypal' ? 'border-blue-500' : ''
+            }`}
+            onClick={() => handlePaymentChange('paypal')}
+            bordered={selectedPayment === 'paypal'}
+          >
+            <p>PayPal</p>
+          </Card>
+          <Card
+            className={`cursor-pointer ${
+              selectedPayment === 'bankTransfer' ? 'border-blue-500' : ''
+            }`}
+            onClick={() => handlePaymentChange('bankTransfer')}
+            bordered={selectedPayment === 'bankTransfer'}
+          >
+            <p>Банковский перевод</p>
+          </Card>
+          <Card
+            className={`cursor-pointer ${
+              selectedPayment === 'cash' ? 'border-blue-500' : ''
+            }`}
+            onClick={() => handlePaymentChange('cash')}
+            bordered={selectedPayment === 'cash'}
+          >
+            <p>Наличные</p>
+          </Card>
+        </div>
+      </Modal>
     </main>
   );
 }

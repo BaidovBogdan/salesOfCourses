@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { Input, Modal } from 'antd';
-import { SearchOutlined, GlobalOutlined } from '@ant-design/icons';
+import {
+  SearchOutlined,
+  GlobalOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import Burger from '../components/shared/Burger';
 
@@ -67,7 +71,7 @@ export default function Header() {
           </div>
           <Link to={'/personal'}>
             <div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center">
-              профиль
+              <UserOutlined />
             </div>
           </Link>
         </div>
