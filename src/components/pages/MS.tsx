@@ -1,5 +1,3 @@
-import { Button, Card } from 'antd';
-
 export default function MyShopping() {
   const CardChange = () => {
     return (

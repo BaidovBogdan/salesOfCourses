@@ -7,6 +7,8 @@ const Burger = () => {
 
   const handleMenuClick = (key: string) => {
     setIsOpen(false);
+
+    console.log(`Clicked on item ${key}`);
   };
 
   const handleDropdownVisibility = (visible: boolean) => {
