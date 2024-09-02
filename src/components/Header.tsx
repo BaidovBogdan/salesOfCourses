@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Input, Modal } from 'antd';
+import { useContext, useState } from 'react';
+import { Button, Input, Modal } from 'antd';
 import {
   SearchOutlined,
   GlobalOutlined,
@@ -7,9 +7,11 @@ import {
 } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import Burger from '../components/shared/Burger';
+import AuthContext from '../context/AuthContext';
 
 export default function Header() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { authTokens } = useContext(AuthContext);
 
   const showModal = () => {
     setIsModalOpen(true);
@@ -33,13 +35,13 @@ export default function Header() {
 
           {/* Links: Visible only on desktop */}
           <div className="hidden lg:flex gap-4">
-            <Link to={'/link1'} className="text-teal-200 hover:text-white">
+            <Link to={'/'} className="text-teal-200 hover:text-white">
               Link 1
             </Link>
-            <Link to={'/link2'} className="text-teal-200 hover:text-white">
+            <Link to={'/'} className="text-teal-200 hover:text-white">
               Link 2
             </Link>
-            <Link to={'/link3'} className="text-teal-200 hover:text-white">
+            <Link to={'/'} className="text-teal-200 hover:text-white">
               Link 3
             </Link>
           </div>
@@ -69,11 +71,17 @@ export default function Header() {
             <div className="w-6 h-6 bg-green-500 rounded-full -ml-6">in</div>
             <div className="w-6 h-6 bg-red-500 rounded-full">y</div>
           </div>
-          <Link to={'/personal'}>
-            <div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center">
-              <UserOutlined />
-            </div>
-          </Link>
+          {authTokens ? (
+            <Link to={'/personal'}>
+              <div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center">
+                <UserOutlined />
+              </div>
+            </Link>
+          ) : (
+            <Link to={'/login'}>
+              <Button>Логин</Button>
+            </Link>
+          )}
         </div>
       </nav>
 

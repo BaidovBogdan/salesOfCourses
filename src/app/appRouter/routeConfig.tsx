@@ -7,6 +7,8 @@ import CourserCreate from '../../components/pages/CC';
 import CourseTemplate from '../../components/pages/CT';
 import SuccessBuy from '../../components/pages/SB';
 import MyShopping from '../../components/pages/MS';
+import Login from '../../components/pages/Login';
+import Registration from '../../components/pages/Registration';
 
 export enum AppRoutes {
   Home = 'home',
@@ -17,6 +19,8 @@ export enum AppRoutes {
   CourseTemplate = 'ct',
   SuccessBuy = 'sb',
   MyShopping = 'ms',
+  Login = 'login',
+  Registration = 'registration',
 }
 
 export const routePaths: Record<AppRoutes, string> = {
@@ -28,6 +32,8 @@ export const routePaths: Record<AppRoutes, string> = {
   [AppRoutes.CourseTemplate]: '/ct',
   [AppRoutes.SuccessBuy]: '/sb',
   [AppRoutes.MyShopping]: '/ms',
+  [AppRoutes.Login]: '/login',
+  [AppRoutes.Registration]: '/registration',
 };
 
 export const routerConfig: Record<AppRoutes, RouteObject> = {
@@ -62,5 +68,13 @@ export const routerConfig: Record<AppRoutes, RouteObject> = {
   [AppRoutes.MyShopping]: {
     path: routePaths[AppRoutes.MyShopping],
     element: <MyShopping />,
+  },
+  [AppRoutes.Login]: {
+    path: routePaths[AppRoutes.Login],
+    element: <Login />,
+  },
+  [AppRoutes.Registration]: {
+    path: routePaths[AppRoutes.Registration],
+    element: <Registration />,
   },
 };
