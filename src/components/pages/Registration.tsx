@@ -2,12 +2,13 @@ import { Form, Input, Button, Typography } from 'antd';
 import { MailOutlined, LockOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import AuthContext from '../../context/AuthContext';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 
 const { Title, Text } = Typography;
 
 export default function Registration() {
   const { registerUser } = useContext(AuthContext);
+  const [load, setLoad] = useState(false);
 
   const onFinish = (values: {
     email: string;
@@ -15,6 +16,7 @@ export default function Registration() {
     password2: string;
   }) => {
     registerUser(values.email, values.password, values.password2);
+    setLoad(true);
   };
 
   return (
@@ -77,6 +79,8 @@ export default function Registration() {
               htmlType="submit"
               className="w-full bg-blue-500 hover:bg-blue-600 text-white"
               size="large"
+              loading={load}
+              block
             >
               Зарегистрироваться
             </Button>

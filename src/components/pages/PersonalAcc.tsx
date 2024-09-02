@@ -1,11 +1,44 @@
-import { CameraOutlined, EditOutlined } from '@ant-design/icons';
-import { Button, Card, Modal } from 'antd';
-import { useState } from 'react';
+import { useState, useContext } from 'react';
+import { Button, Card, Modal, Input, Form, message } from 'antd';
+import {
+  CameraOutlined,
+  LockOutlined,
+  LogoutOutlined,
+} from '@ant-design/icons';
 import { Link } from 'react-router-dom';
+import AuthContext from '../../context/AuthContext';
 
 export default function PersonalAcc() {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] =
+    useState<boolean>(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
   const [selectedPayment, setSelectedPayment] = useState<string>('');
+  const [oldPassword, setOldPassword] = useState<string>('');
+  const [newPassword, setNewPassword] = useState<string>('');
+  const [profileForm] = Form.useForm();
+
+  const { logoutUser, changePassword, updateProfile } = useContext(AuthContext);
+
+  const showProfileModal = () => {
+    setIsProfileModalOpen(true);
+  };
+
+  const handleProfileModalOk = async () => {
+    try {
+      await profileForm.validateFields();
+      const values = profileForm.getFieldsValue();
+      await updateProfile(values); // Assuming updateProfile is a function in AuthContext
+      message.success('Profile updated successfully!');
+      setIsProfileModalOpen(false);
+    } catch (error) {
+      message.error('Failed to update profile!');
+    }
+  };
+
+  const handleProfileModalCancel = () => {
+    setIsProfileModalOpen(false);
+  };
 
   const showModal = () => {
     setIsModalOpen(true);
@@ -21,6 +54,30 @@ export default function PersonalAcc() {
 
   const handlePaymentChange = (e: string) => {
     setSelectedPayment(e);
+  };
+
+  const showPasswordModal = () => {
+    setIsPasswordModalOpen(true);
+  };
+
+  const handlePasswordModalOk = async () => {
+    try {
+      if (!oldPassword || !newPassword) {
+        message.error('Both fields are required!');
+        return;
+      }
+      await changePassword(oldPassword, newPassword, newPassword);
+      message.success('Password changed successfully!');
+      setOldPassword('');
+      setNewPassword('');
+      setIsPasswordModalOpen(false);
+    } catch (error) {
+      message.error('Failed to change password!');
+    }
+  };
+
+  const handlePasswordModalCancel = () => {
+    setIsPasswordModalOpen(false);
   };
 
   return (
@@ -40,58 +97,39 @@ export default function PersonalAcc() {
                 shape="circle"
                 icon={<CameraOutlined />}
                 className="absolute top-2 right-2"
+                onClick={showProfileModal}
               />
+            </div>
+            <div className="flex justify-center gap-4">
+              <Button onClick={showPasswordModal}>
+                <LockOutlined />
+              </Button>
+              <Link to={'/'} className="flex justify-center">
+                <Button onClick={() => logoutUser()}>
+                  <LogoutOutlined />
+                </Button>
+              </Link>
             </div>
           </div>
           <div>
             <div className="relative w-36 h-8 sm:w-40 sm:h-10 flex items-center">
               <p className="text-center lg:text-left">Иван Иванов</p>
-              <Button
-                type="primary"
-                shape="circle"
-                icon={<EditOutlined />}
-                className="absolute right-2"
-              />
             </div>
           </div>
           <div>
             <div className="relative w-full sm:w-64 lg:w-72 h-20 sm:h-24 lg:h-28 border-4 border-gray-700 rounded-3xl flex items-center p-4">
               <p className="text-center lg:text-left">о себе</p>
-              <Button
-                type="primary"
-                shape="circle"
-                icon={<EditOutlined />}
-                className="absolute right-2"
-              />
             </div>
           </div>
           <div className="flex gap-4 justify-center lg:justify-start">
             <div className="relative w-16 h-16 sm:w-20 sm:h-20 border-4 border-gray-700 rounded-3xl flex items-center justify-center">
               <p>lorem</p>
-              <Button
-                type="primary"
-                shape="circle"
-                icon={<EditOutlined />}
-                className="absolute right-0 top-0"
-              />
             </div>
             <div className="relative w-16 h-16 sm:w-20 sm:h-20 border-4 border-gray-700 rounded-3xl flex items-center justify-center">
               <p>lorem</p>
-              <Button
-                type="primary"
-                shape="circle"
-                icon={<EditOutlined />}
-                className="absolute right-0 top-0"
-              />
             </div>
             <div className="relative w-16 h-16 sm:w-20 sm:h-20 border-4 border-gray-700 rounded-3xl flex items-center justify-center">
               <p>lorem</p>
-              <Button
-                type="primary"
-                shape="circle"
-                icon={<EditOutlined />}
-                className="absolute right-0 top-0"
-              />
             </div>
           </div>
         </div>
@@ -164,6 +202,85 @@ export default function PersonalAcc() {
             <p>Наличные</p>
           </Card>
         </div>
+      </Modal>
+      <Modal
+        title="Изменить пароль"
+        open={isPasswordModalOpen}
+        onOk={handlePasswordModalOk}
+        onCancel={handlePasswordModalCancel}
+        okText="Сохранить"
+        cancelText="Отмена"
+      >
+        <Form
+          layout="vertical"
+          initialValues={{ oldPassword: '', newPassword: '' }}
+        >
+          <Form.Item
+            label="Старый пароль"
+            name="oldPassword"
+            rules={[{ required: true, message: 'Введите старый пароль!' }]}
+          >
+            <Input.Password
+              value={oldPassword}
+              onChange={(e) => setOldPassword(e.target.value)}
+              placeholder="Введите старый пароль"
+            />
+          </Form.Item>
+          <Form.Item
+            label="Новый пароль"
+            name="newPassword"
+            rules={[{ required: true, message: 'Введите новый пароль!' }]}
+          >
+            <Input.Password
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Введите новый пароль"
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+      <Modal
+        title="Редактировать профиль"
+        open={isProfileModalOpen}
+        onOk={handleProfileModalOk}
+        onCancel={handleProfileModalCancel}
+        okText="Сохранить"
+        cancelText="Отмена"
+      >
+        <Form form={profileForm} layout="vertical">
+          <Form.Item
+            label="Имя"
+            name="first_name"
+            rules={[{ required: true, message: 'Введите ваше имя!' }]}
+          >
+            <Input placeholder="Введите ваше имя" />
+          </Form.Item>
+          <Form.Item
+            label="Фамилия"
+            name="last_name"
+            rules={[{ required: true, message: 'Введите вашу фамилию!' }]}
+          >
+            <Input placeholder="Введите вашу фамилию" />
+          </Form.Item>
+          <Form.Item label="Фото профиля URL" name="photo">
+            <Input placeholder="Введите URL фото профиля" />
+          </Form.Item>
+          <Form.Item label="Описание" name="description">
+            <Input.TextArea placeholder="Введите описание" rows={4} />
+          </Form.Item>
+          <Form.Item label="Портфолио URL" name="link_to_portfolio">
+            <Input placeholder="Введите URL портфолио" />
+          </Form.Item>
+          <Form.Item label="Behance URL" name="link_to_behance">
+            <Input placeholder="Введите URL Behance" />
+          </Form.Item>
+          <Form.Item label="Instagram URL" name="link_to_instagram">
+            <Input placeholder="Введите URL Instagram" />
+          </Form.Item>
+          <Form.Item label="ArtStation URL" name="link_to_artstation">
+            <Input placeholder="Введите URL ArtStation" />
+          </Form.Item>
+        </Form>
       </Modal>
     </main>
   );

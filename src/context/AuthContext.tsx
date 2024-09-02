@@ -1,10 +1,23 @@
 import { createContext, useState, ReactNode, useEffect } from 'react';
 import { BASE_URL } from '../settings/settings';
 import axios from 'axios';
+import { Input, Modal, message, notification } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthTokens {
   access: string;
   refresh: string;
+}
+
+export interface ProfileData {
+  first_name?: string;
+  last_name?: string;
+  photo?: string;
+  description?: string;
+  link_to_portfolio?: string;
+  link_to_behance?: string;
+  link_to_instagram?: string;
+  link_to_artstation?: string;
 }
 
 interface User {}
@@ -20,6 +33,18 @@ interface AuthContextType {
   ) => Promise<void>;
   logoutUser: () => void;
   updateToken: () => void;
+  handleForgotPassword: (email: string) => Promise<void>;
+  handleForgotPasswordConfirm: (
+    code: string,
+    newPassword: string,
+    newPasswordConfirm: string,
+  ) => Promise<void>;
+  updateProfile: (profileData: ProfileData) => Promise<void>;
+  changePassword: (
+    oldPassword: string,
+    newPassword: string,
+    newPasswordConfirm: string,
+  ) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -29,6 +54,10 @@ const AuthContext = createContext<AuthContextType>({
   registerUser: async () => {},
   logoutUser: () => {},
   updateToken: () => {},
+  changePassword: async () => {},
+  handleForgotPassword: async () => {},
+  handleForgotPasswordConfirm: async () => {},
+  updateProfile: async () => {},
 });
 
 const parseJwt = (token: string): User | null => {
@@ -58,7 +87,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     const tokens = localStorage.getItem('authTokens');
     return tokens ? JSON.parse(tokens) : null;
   });
-
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(() => {
     const tokens = localStorage.getItem('authTokens');
     return tokens ? parseJwt(JSON.parse(tokens).access) : null;
@@ -68,52 +97,44 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const updateToken = async () => {
     try {
-      const response = await axios.post(
-        `${BASE_URL}/api/v1/account/refresh`,
-        {
-          refresh: authTokens?.refresh,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-      );
+      if (!authTokens?.refresh) return;
+
+      const response = await axios.post(`${BASE_URL}/api/v1/account/refresh/`, {
+        refresh: authTokens.refresh,
+      });
 
       if (response.status === 200) {
         const data = response.data;
-        setAuthTokens(data);
-        setUser(parseJwt(data.access));
-        localStorage.setItem('authTokens', JSON.stringify(data));
+        setAuthTokens(data); // Update tokens in state
+        setUser(parseJwt(data.access)); // Parse and set the user from access token
+        localStorage.setItem('authTokens', JSON.stringify(data)); // Persist tokens
       } else {
-        logoutUser();
+        logoutUser(); // Logout if the refresh fails
       }
-
-      if (loading) {
-        setLoading(false);
-        console.log('hello');
-      }
-    } catch (e: any) {
-      setLoading(false);
-      alert('Сервис временно не работает! Связитесь с Администратором');
+    } catch (error: any) {
+      console.error('Token refresh error:', error); // Log the error for debugging
+      setLoading(false); // Ensure loading is set to false on error
+      alert(
+        'The service is temporarily unavailable! Please contact the Administrator.',
+      );
     }
   };
 
   useEffect(() => {
     if (loading) {
-      updateToken();
+      updateToken().finally(() => setLoading(false)); // Update token on initial load
     }
 
-    const sevenHoursAndThirtyMinutes = 450 * 60 * 1000;
+    const sevenHoursAndThirtyMinutes = 450 * 60 * 1000; // 7 hours and 30 minutes in milliseconds
 
     const interval = setInterval(() => {
       if (authTokens) {
-        updateToken();
+        updateToken(); // Periodically refresh the token
       }
     }, sevenHoursAndThirtyMinutes);
 
-    return () => clearInterval(interval);
-  }, [authTokens, loading]);
+    return () => clearInterval(interval); // Clean up the interval on unmount
+  }, [authTokens, loading]); // Depend on `authTokens` and `loading` to avoid unnecessary re-renders
 
   const loginUser = async (email: string, password: string) => {
     try {
@@ -128,11 +149,40 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         setAuthTokens(data);
         setUser(parseJwt(data.access));
         localStorage.setItem('authTokens', JSON.stringify(data));
+        navigate('/');
+        notification.success({
+          message: 'Login Successful',
+          description: 'You have logged in successfully!',
+        });
       } else {
         throw new Error('Invalid credentials');
       }
     } catch (error: any) {
       console.error('Login error:', error);
+      notification.error({
+        message: 'Login Error',
+        description: 'Invalid credentials. Please try again.',
+      });
+      throw error;
+    }
+  };
+
+  const updateProfile = async (profileData: ProfileData) => {
+    try {
+      const response = await axios.patch(
+        `${BASE_URL}/api/v1/account/update_user/`,
+        profileData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          },
+        },
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error('Error updating profile:', error);
       throw error;
     }
   };
@@ -152,22 +202,162 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         },
       );
 
-      // Предположим, что сервер возвращает токены после регистрации
-      const data = response.data;
-      console.log(data);
+      if (response.status === 201) {
+        message.success(
+          'Registration successful. Please check your email for the activation code.',
+        );
 
-      if (response.status === 200) {
-        // Сохраняем токены и пользователя, как при входе
-        setAuthTokens(data);
-        setUser(parseJwt(data.access));
-        localStorage.setItem('authTokens', JSON.stringify(data));
-        console.log('Registration successful and tokens set:', data); // Добавим вывод в консоль
+        let activationCode = '';
+
+        Modal.confirm({
+          title: 'Activate Your Account',
+          content: (
+            <Input
+              placeholder="Enter activation code"
+              onChange={(e) => (activationCode = e.target.value)}
+            />
+          ),
+          okText: 'Activate',
+          cancelText: 'Cancel',
+          onOk: async () => {
+            try {
+              const activationResponse = await axios.post(
+                `${BASE_URL}/api/v1/account/activate/`,
+                {
+                  activation_code: activationCode,
+                },
+              );
+
+              const tokens = activationResponse.data;
+
+              if (activationResponse.status === 201) {
+                message.success('Account activated successfully!');
+                setAuthTokens(tokens);
+                setUser(parseJwt(tokens.access));
+                localStorage.setItem('authTokens', JSON.stringify(tokens));
+                navigate('/');
+                notification.success({
+                  message: 'Account Activated',
+                  description: 'Account activated successfully!',
+                });
+              } else {
+                notification.error({
+                  message: 'Activation Failed',
+                  description: 'Activation failed. Please try again.',
+                });
+              }
+            } catch (error) {
+              console.error('Activation error:', error);
+              notification.error({
+                message: 'Activation Failed',
+                description: 'Activation failed. Please try again.',
+              });
+            }
+          },
+          onCancel: () => {
+            console.log('Activation cancelled');
+          },
+        });
       } else {
         console.error('Registration failed:', response.statusText);
       }
     } catch (error: any) {
       console.error('Registration error:', error);
+      notification.error({
+        message: 'Registration Error',
+        description: 'Registration failed. Please try again.',
+      });
       throw error;
+    }
+  };
+
+  const changePassword = async (
+    oldPassword: string,
+    newPassword: string,
+    newPasswordConfirm: string,
+  ) => {
+    try {
+      if (!authTokens?.access) {
+        throw new Error('No access token found.');
+      }
+
+      const response = await axios.post(
+        `${BASE_URL}/api/v1/account/change_password/`,
+        {
+          old_password: oldPassword,
+          new_password: newPassword,
+          new_password_confirm: newPasswordConfirm, // Add this field to match backend requirements
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${authTokens.access}`,
+          },
+        },
+      );
+
+      if (response.status === 200) {
+        notification.success({
+          message: 'Password Changed',
+          description: 'Your password has been changed successfully!',
+        });
+      } else {
+        notification.error({
+          message: 'Change Password Error',
+          description: 'Failed to change password. Please try again.',
+        });
+      }
+    } catch (error: any) {
+      console.error(
+        'Change password error:',
+        error.response?.data || error.message,
+      );
+      notification.error({
+        message: 'Change Password Error',
+        description:
+          error.response?.data?.non_field_errors?.[0] ||
+          'Failed to change password. Please try again.',
+      });
+      throw error;
+    }
+  };
+
+  const handleForgotPasswordConfirm = async (
+    code: string,
+    new_password: string,
+    new_password_confirm: string,
+  ) => {
+    try {
+      await axios.post(`${BASE_URL}/api/v1/account/forgot_password_confirm/`, {
+        code: code,
+        new_password: new_password,
+        new_password_confirm: new_password_confirm,
+      });
+      notification.success({
+        message: 'Password Changed',
+        description: 'Your password has been changed successfully.',
+      });
+    } catch (error) {
+      notification.error({
+        message: 'Error',
+        description: 'Failed to change the password. Please try again.',
+      });
+    }
+  };
+
+  const handleForgotPassword = async (email: string) => {
+    try {
+      await axios.post(`${BASE_URL}/api/v1/account/forgot_password/`, {
+        email: email,
+      });
+      notification.success({
+        message: 'email code',
+        description: 'Password reset code has been sent to your email.',
+      });
+    } catch (error) {
+      notification.error({
+        message: 'Error',
+        description: 'Failed to send password reset link. Please try again.',
+      });
     }
   };
 
@@ -175,6 +365,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     setAuthTokens(null);
     setUser(null);
     localStorage.removeItem('authTokens');
+    notification.success({
+      message: 'Logout Successful',
+      description: 'You have logged out successfully!',
+    });
   };
 
   const contextData: AuthContextType = {
@@ -184,6 +378,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     registerUser,
     updateToken,
     logoutUser,
+    changePassword,
+    handleForgotPassword,
+    handleForgotPasswordConfirm,
+    updateProfile,
   };
 
   return (
