@@ -1,5 +1,5 @@
-import { useState, useContext } from 'react';
-import { Button, Card, Modal, Input, Form, message } from 'antd';
+import { useState, useContext, useEffect } from 'react';
+import { Button, Card, Modal, Input, Form, message, Upload } from 'antd';
 import {
   CameraOutlined,
   LockOutlined,
@@ -18,11 +18,27 @@ export default function PersonalAcc() {
   const [newPassword, setNewPassword] = useState<string>('');
   const [profileForm] = Form.useForm();
 
-  const { logoutUser, changePassword, updateProfile } = useContext(AuthContext);
+  const {
+    logoutUser,
+    changePassword,
+    updateProfile,
+    fetchProfile,
+    userProfile,
+  } = useContext(AuthContext);
 
   const showProfileModal = () => {
     setIsProfileModalOpen(true);
   };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  useEffect(() => {
+    if (userProfile) {
+      profileForm.setFieldsValue(userProfile);
+    }
+  }, [userProfile]);
 
   const handleProfileModalOk = async () => {
     try {
@@ -87,11 +103,19 @@ export default function PersonalAcc() {
         <div className="firstBlock p-4 gap-6 flex flex-col items-center lg:items-start">
           <div className="firstBox">
             <div className="relative w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48">
-              <img
-                src="https://via.placeholder.com/150"
-                alt="User"
-                className="w-full h-full object-cover rounded-full"
-              />
+              {userProfile?.photo instanceof File ? (
+                <img
+                  src={URL.createObjectURL(userProfile?.photo)}
+                  alt="Profile"
+                  className="w-full h-full rounded-full"
+                />
+              ) : (
+                <img
+                  src="https://via.placeholder.com/150"
+                  alt="Profile"
+                  className="w-full h-full rounded-full"
+                />
+              )}
               <Button
                 type="primary"
                 shape="circle"
@@ -113,23 +137,27 @@ export default function PersonalAcc() {
           </div>
           <div>
             <div className="relative w-36 h-8 sm:w-40 sm:h-10 flex items-center">
-              <p className="text-center lg:text-left">Иван Иванов</p>
+              <p className="text-center lg:text-left">
+                {userProfile?.first_name} {userProfile?.last_name}
+              </p>
             </div>
           </div>
           <div>
             <div className="relative w-full sm:w-64 lg:w-72 h-20 sm:h-24 lg:h-28 border-4 border-gray-700 rounded-3xl flex items-center p-4">
-              <p className="text-center lg:text-left">о себе</p>
+              <p className="text-center lg:text-left">
+                {userProfile?.description}
+              </p>
             </div>
           </div>
           <div className="flex gap-4 justify-center lg:justify-start">
             <div className="relative w-16 h-16 sm:w-20 sm:h-20 border-4 border-gray-700 rounded-3xl flex items-center justify-center">
-              <p>lorem</p>
+              <p>{userProfile?.link_to_instagram}</p>
             </div>
             <div className="relative w-16 h-16 sm:w-20 sm:h-20 border-4 border-gray-700 rounded-3xl flex items-center justify-center">
-              <p>lorem</p>
+              <p>{userProfile?.link_to_portfolio}</p>
             </div>
             <div className="relative w-16 h-16 sm:w-20 sm:h-20 border-4 border-gray-700 rounded-3xl flex items-center justify-center">
-              <p>lorem</p>
+              <p>{userProfile?.link_to_artstation}</p>
             </div>
           </div>
         </div>
@@ -262,8 +290,16 @@ export default function PersonalAcc() {
           >
             <Input placeholder="Введите вашу фамилию" />
           </Form.Item>
-          <Form.Item label="Фото профиля URL" name="photo">
-            <Input placeholder="Введите URL фото профиля" />
+          <Form.Item label="Фото профиля" name="photo">
+            <Upload
+              beforeUpload={(file) => {
+                profileForm.setFieldsValue({ photo: file });
+                return false;
+              }}
+              showUploadList={false}
+            >
+              <Button>Загрузить фото</Button>
+            </Upload>
           </Form.Item>
           <Form.Item label="Описание" name="description">
             <Input.TextArea placeholder="Введите описание" rows={4} />

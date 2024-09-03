@@ -12,7 +12,7 @@ interface AuthTokens {
 export interface ProfileData {
   first_name?: string;
   last_name?: string;
-  photo?: string;
+  photo?: File | null;
   description?: string;
   link_to_portfolio?: string;
   link_to_behance?: string;
@@ -24,6 +24,7 @@ interface User {}
 
 interface AuthContextType {
   user: User | null;
+  userProfile: ProfileData | null;
   authTokens: AuthTokens | null;
   loginUser: (email: string, password: string) => Promise<void>;
   registerUser: (
@@ -40,6 +41,7 @@ interface AuthContextType {
     newPasswordConfirm: string,
   ) => Promise<void>;
   updateProfile: (profileData: ProfileData) => Promise<void>;
+  fetchProfile: () => Promise<void>;
   changePassword: (
     oldPassword: string,
     newPassword: string,
@@ -48,6 +50,7 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType>({
+  userProfile: null,
   user: null,
   authTokens: null,
   loginUser: async () => {},
@@ -58,6 +61,7 @@ const AuthContext = createContext<AuthContextType>({
   handleForgotPassword: async () => {},
   handleForgotPasswordConfirm: async () => {},
   updateProfile: async () => {},
+  fetchProfile: async () => {},
 });
 
 const parseJwt = (token: string): User | null => {
@@ -95,10 +99,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const [loading, setLoading] = useState(true);
 
+  const [userProfile, setUserProfile] = useState<ProfileData | null>(null);
+
+  const fetchProfile = async () => {
+    setLoading(true); // Set loading to true when starting to fetch
+    try {
+      if (authTokens?.access) {
+        const response = await axios.patch(
+          `${BASE_URL}/api/v1/account/update_user/`,
+          {}, // Empty body for fetching
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${authTokens.access}`,
+            },
+          },
+        );
+        setUserProfile(response.data); // Update profile data
+      }
+    } catch (error) {
+      console.error('Failed to fetch profile data:', error);
+      setUserProfile(null); // Clear profile data on error
+    } finally {
+      setLoading(false); // End loading state
+    }
+  };
+
   const updateToken = async () => {
     try {
       if (!authTokens?.refresh) return;
-
       const response = await axios.post(`${BASE_URL}/api/v1/account/refresh/`, {
         refresh: authTokens.refresh,
       });
@@ -114,9 +143,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     } catch (error: any) {
       console.error('Token refresh error:', error); // Log the error for debugging
       setLoading(false); // Ensure loading is set to false on error
-      alert(
-        'The service is temporarily unavailable! Please contact the Administrator.',
-      );
+      alert('ЧТО ТО ПРОИЗОШЛО С АККАУНТОМ!!!');
     }
   };
 
@@ -169,17 +196,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const updateProfile = async (profileData: ProfileData) => {
     try {
+      const formData = new FormData();
+
+      Object.keys(profileData).forEach((key) => {
+        const value = profileData[key as keyof ProfileData];
+
+        if (value !== undefined && value !== null) {
+          if (key === 'photo' && value instanceof File) {
+            formData.append(key, value);
+          } else if (typeof value === 'string') {
+            formData.append(key, value);
+          }
+        }
+      });
+
       const response = await axios.patch(
         `${BASE_URL}/api/v1/account/update_user/`,
-        profileData,
+        formData,
         {
           headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${authTokens?.access}`,
           },
         },
       );
 
+      setUserProfile(response.data);
       return response.data;
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -364,6 +406,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const logoutUser = () => {
     setAuthTokens(null);
     setUser(null);
+    setUserProfile(null);
     localStorage.removeItem('authTokens');
     notification.success({
       message: 'Logout Successful',
@@ -373,6 +416,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const contextData: AuthContextType = {
     user,
+    userProfile,
     authTokens,
     loginUser,
     registerUser,
@@ -382,6 +426,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     handleForgotPassword,
     handleForgotPasswordConfirm,
     updateProfile,
+    fetchProfile,
   };
 
   return (

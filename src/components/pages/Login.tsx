@@ -139,7 +139,7 @@ const Login: React.FC = () => {
       {/* Forgot Password Modal */}
       <Modal
         title="Забыли пароль?"
-        visible={isForgotPasswordVisible}
+        open={isForgotPasswordVisible}
         onCancel={() => setForgotPasswordVisible(false)}
         onOk={handleForgotPasswordSubmit}
       >
@@ -150,10 +150,9 @@ const Login: React.FC = () => {
         />
       </Modal>
 
-      {/* Reset Password Modal */}
       <Modal
         title="Сброс пароля"
-        visible={isResetPasswordVisible}
+        open={isResetPasswordVisible}
         onCancel={() => setResetPasswordVisible(false)}
         footer={null}
         destroyOnClose
