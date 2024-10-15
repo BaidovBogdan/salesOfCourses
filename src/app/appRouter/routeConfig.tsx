@@ -9,6 +9,8 @@ import SuccessBuy from '../../components/pages/SB';
 import MyShopping from '../../components/pages/MS';
 import Login from '../../components/pages/Login';
 import Registration from '../../components/pages/Registration';
+import Preview from '../../components/pages/Preview';
+import DemoBalance from '../../components/pages/demoBalance';
 
 export enum AppRoutes {
   Home = 'home',
@@ -21,6 +23,8 @@ export enum AppRoutes {
   MyShopping = 'ms',
   Login = 'login',
   Registration = 'registration',
+  Preview = 'preview',
+  DemoBalance = 'demobalance',
 }
 
 export const routePaths: Record<AppRoutes, string> = {
@@ -34,6 +38,8 @@ export const routePaths: Record<AppRoutes, string> = {
   [AppRoutes.MyShopping]: '/ms',
   [AppRoutes.Login]: '/login',
   [AppRoutes.Registration]: '/registration',
+  [AppRoutes.Preview]: '/preview',
+  [AppRoutes.DemoBalance]: '/demobalance',
 };
 
 export const routerConfig: Record<AppRoutes, RouteObject> = {
@@ -58,11 +64,11 @@ export const routerConfig: Record<AppRoutes, RouteObject> = {
     element: <CourserCreate />,
   },
   [AppRoutes.CourseTemplate]: {
-    path: routePaths[AppRoutes.CourseTemplate],
+    path: `${routePaths[AppRoutes.CourseTemplate]}/:id`,
     element: <CourseTemplate />,
   },
   [AppRoutes.SuccessBuy]: {
-    path: routePaths[AppRoutes.SuccessBuy],
+    path: `${routePaths[AppRoutes.SuccessBuy]}/:id`,
     element: <SuccessBuy />,
   },
   [AppRoutes.MyShopping]: {
@@ -76,5 +82,13 @@ export const routerConfig: Record<AppRoutes, RouteObject> = {
   [AppRoutes.Registration]: {
     path: routePaths[AppRoutes.Registration],
     element: <Registration />,
+  },
+  [AppRoutes.Preview]: {
+    path: routePaths[AppRoutes.Preview],
+    element: <Preview />,
+  },
+  [AppRoutes.DemoBalance]: {
+    path: routePaths[AppRoutes.DemoBalance],
+    element: <DemoBalance />,
   },
 };

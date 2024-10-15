@@ -1,8 +1,17 @@
 import { createContext, useState, ReactNode, useEffect } from 'react';
 import { BASE_URL } from '../settings/settings';
 import axios from 'axios';
-import { Input, Modal, message, notification } from 'antd';
+import { Input, Modal, notification } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { useAtom } from 'jotai';
+import {
+  personalInfoAtom,
+  PersonalInfo,
+  idUser,
+  loadAtom,
+  ForgotPasswordVisible,
+  ResetPasswordVisible,
+} from '../components/shared/atoms';
 
 interface AuthTokens {
   access: string;
@@ -33,6 +42,7 @@ interface AuthContextType {
     password2: string,
   ) => Promise<void>;
   logoutUser: () => void;
+  userInfo: () => Promise<PersonalInfo | null>;
   updateToken: () => void;
   handleForgotPassword: (email: string) => Promise<void>;
   handleForgotPasswordConfirm: (
@@ -62,6 +72,7 @@ const AuthContext = createContext<AuthContextType>({
   handleForgotPasswordConfirm: async () => {},
   updateProfile: async () => {},
   fetchProfile: async () => {},
+  userInfo: async () => null,
 });
 
 const parseJwt = (token: string): User | null => {
@@ -97,9 +108,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     return tokens ? parseJwt(JSON.parse(tokens).access) : null;
   });
 
+  const [, setForgotPasswordVisible] = useAtom(ForgotPasswordVisible);
+  const [, setResetPasswordVisible] = useAtom(ResetPasswordVisible);
+
   const [loading, setLoading] = useState(true);
+  const [, setLoad] = useAtom(loadAtom);
 
   const [userProfile, setUserProfile] = useState<ProfileData | null>(null);
+  //@ts-ignore
+  const [, setUserInfo] = useAtom<PersonalInfo>(personalInfoAtom);
+  const [, setIdAtom] = useAtom(idUser);
 
   const fetchProfile = async () => {
     setLoading(true); // Set loading to true when starting to fetch
@@ -176,7 +194,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         setAuthTokens(data);
         setUser(parseJwt(data.access));
         localStorage.setItem('authTokens', JSON.stringify(data));
-        navigate('/');
         notification.success({
           message: 'Login Successful',
           description: 'You have logged in successfully!',
@@ -198,15 +215,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const formData = new FormData();
 
+      // Append photo only if it is an instance of File
+      if (profileData.photo instanceof File) {
+        formData.append('photo', profileData.photo);
+      }
+
+      // Append other fields
       Object.keys(profileData).forEach((key) => {
         const value = profileData[key as keyof ProfileData];
-
-        if (value !== undefined && value !== null) {
-          if (key === 'photo' && value instanceof File) {
-            formData.append(key, value);
-          } else if (typeof value === 'string') {
-            formData.append(key, value);
-          }
+        if (value !== undefined && value !== null && key !== 'photo') {
+          formData.append(key, value);
         }
       });
 
@@ -229,6 +247,43 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
+  const userInfo = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/api/v1/account/userinfo/`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authTokens?.access}`,
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        logoutUser();
+      }
+      console.error(
+        'Error getting user info:',
+        error.response?.data || error.message,
+      );
+      throw error;
+    }
+  };
+
+  useEffect(() => {
+    if (authTokens?.access) {
+      const fetchUserInfo = async () => {
+        try {
+          const userData = await userInfo();
+          setIdAtom(userData.id);
+          setUserInfo(userData);
+        } catch (error) {
+          console.error('Failed to fetch user info:', error);
+        }
+      };
+
+      fetchUserInfo();
+    }
+  }, [authTokens]);
+
   const registerUser = async (
     email: string,
     password: string,
@@ -245,9 +300,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       );
 
       if (response.status === 201) {
-        message.success(
-          'Registration successful. Please check your email for the activation code.',
-        );
+        setLoad(false);
 
         let activationCode = '';
 
@@ -273,11 +326,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
               const tokens = activationResponse.data;
 
               if (activationResponse.status === 201) {
-                message.success('Account activated successfully!');
                 setAuthTokens(tokens);
                 setUser(parseJwt(tokens.access));
                 localStorage.setItem('authTokens', JSON.stringify(tokens));
-                navigate('/');
+                navigate('/personal');
                 notification.success({
                   message: 'Account Activated',
                   description: 'Account activated successfully!',
@@ -304,11 +356,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         console.error('Registration failed:', response.statusText);
       }
     } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.non_field_errors?.join(', ') ||
+        error.response?.data?.detail ||
+        'Registration failed. Please try again.';
       console.error('Registration error:', error);
       notification.error({
         message: 'Registration Error',
-        description: 'Registration failed. Please try again.',
+        description: errorMessage,
       });
+      setLoad(false);
       throw error;
     }
   };
@@ -374,14 +431,49 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         new_password: new_password,
         new_password_confirm: new_password_confirm,
       });
+
       notification.success({
         message: 'Password Changed',
         description: 'Your password has been changed successfully.',
       });
-    } catch (error) {
+
+      setResetPasswordVisible(false);
+    } catch (error: any) {
+      // Проверяем наличие ошибок в ответе
+      const errorMessages = [];
+
+      // Извлекаем ошибки из полей
+      if (error.response?.data) {
+        const {
+          new_password,
+          new_password_confirm,
+          code: codeErrors,
+        } = error.response.data;
+
+        // Добавляем ошибки по новому паролю
+        if (new_password) {
+          errorMessages.push(...new_password);
+        }
+
+        // Добавляем ошибки по подтверждению нового пароля
+        if (new_password_confirm) {
+          errorMessages.push(...new_password_confirm);
+        }
+
+        // Добавляем ошибки по коду
+        if (codeErrors) {
+          errorMessages.push(...codeErrors);
+        }
+      }
+
+      // Если ошибок нет, выводим общее сообщение
+      if (errorMessages.length === 0) {
+        errorMessages.push('Failed to change the password. Please try again.');
+      }
+
       notification.error({
         message: 'Error',
-        description: 'Failed to change the password. Please try again.',
+        description: errorMessages.join(' '),
       });
     }
   };
@@ -391,14 +483,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       await axios.post(`${BASE_URL}/api/v1/account/forgot_password/`, {
         email: email,
       });
+      setForgotPasswordVisible(false);
+      setResetPasswordVisible(true);
       notification.success({
-        message: 'email code',
+        message: 'Email Code',
         description: 'Password reset code has been sent to your email.',
       });
-    } catch (error) {
+    } catch (error: any) {
+      const errorMessages = [];
+
+      // Проверяем наличие ошибок в ответе
+      if (error.response?.data) {
+        const { email: emailErrors } = error.response.data;
+
+        // Если ошибки по email присутствуют, добавляем их в массив ошибок
+        if (emailErrors) {
+          errorMessages.push(...emailErrors);
+        }
+      }
+
+      // Если ошибок нет, выводим общее сообщение
+      if (errorMessages.length === 0) {
+        errorMessages.push(
+          'Failed to send password reset link. Please try again.',
+        );
+      }
+
       notification.error({
         message: 'Error',
-        description: 'Failed to send password reset link. Please try again.',
+        description: errorMessages.join(' '),
       });
     }
   };
@@ -427,6 +540,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     handleForgotPasswordConfirm,
     updateProfile,
     fetchProfile,
+    userInfo,
   };
 
   return (

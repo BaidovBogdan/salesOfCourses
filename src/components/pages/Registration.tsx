@@ -1,14 +1,16 @@
 import { Form, Input, Button, Typography } from 'antd';
-import { MailOutlined, LockOutlined } from '@ant-design/icons';
+import { MailOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import AuthContext from '../../context/AuthContext';
-import { useContext, useState } from 'react';
+import { useContext } from 'react';
+import { useAtom } from 'jotai';
+import { loadAtom } from '../shared/atoms';
 
 const { Title, Text } = Typography;
 
 export default function Registration() {
   const { registerUser } = useContext(AuthContext);
-  const [load, setLoad] = useState(false);
+  const [load, setLoad] = useAtom(loadAtom);
 
   const onFinish = (values: {
     email: string;
@@ -51,6 +53,19 @@ export default function Registration() {
             label="Пароль"
             rules={[
               { required: true, message: 'Пожалуйста, введите ваш пароль!' },
+              {
+                min: 8,
+                message: 'Пароль должен содержать минимум 8 символов!',
+              },
+              {
+                pattern: /^(?=.*[A-Z]).*$/,
+                message:
+                  'Пароль должен содержать хотя бы одну заглавную букву!',
+              },
+              {
+                pattern: /^(?=.*\d).*$/,
+                message: 'Пароль должен содержать хотя бы одну цифру!',
+              },
             ]}
           >
             <Input.Password
@@ -62,8 +77,21 @@ export default function Registration() {
           <Form.Item
             name="password2"
             label="Пароль"
+            dependencies={['password']}
+            hasFeedback
             rules={[
-              { required: true, message: 'Пожалуйста, введите ваш пароль!' },
+              {
+                required: true,
+                message: 'Пожалуйста, подтвердите ваш пароль!',
+              },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('password') === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('Пароли не совпадают!'));
+                },
+              }),
             ]}
           >
             <Input.Password
@@ -79,6 +107,7 @@ export default function Registration() {
               htmlType="submit"
               className="w-full bg-blue-500 hover:bg-blue-600 text-white"
               size="large"
+              icon={<LoginOutlined />}
               loading={load}
               block
             >

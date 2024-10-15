@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { MenuOutlined, XOutlined } from '@ant-design/icons';
 import { Dropdown, MenuProps } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 const Burger = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const { t } = useTranslation();
 
   const handleMenuClick = (key: string) => {
     setIsOpen(false);
@@ -24,7 +26,7 @@ const Burger = () => {
           className="hover:text-white"
           onClick={() => handleMenuClick('1')}
         >
-          Link 1
+          {t('header.link1')}
         </a>
       ),
     },
@@ -36,7 +38,7 @@ const Burger = () => {
           className="hover:text-white"
           onClick={() => handleMenuClick('2')}
         >
-          Link 2
+          {t('header.link2')}
         </a>
       ),
     },
@@ -48,7 +50,7 @@ const Burger = () => {
           className="hover:text-white"
           onClick={() => handleMenuClick('3')}
         >
-          Link 3
+          {t('header.link3')}
         </a>
       ),
     },
@@ -59,7 +61,7 @@ const Burger = () => {
       menu={{ items: menuItems }}
       trigger={['click']}
       placement="bottomRight"
-      onOpenChange={handleDropdownVisibility} // Управление видимостью дропдауна
+      onOpenChange={handleDropdownVisibility}
     >
       <button className="text-teal-200 hover:text-white focus:outline-none">
         {isOpen ? (

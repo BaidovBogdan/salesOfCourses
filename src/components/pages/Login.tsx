@@ -1,15 +1,20 @@
 import { useState, useContext } from 'react';
-import { Form, Input, Button, Modal, message, Typography } from 'antd';
-import { MailOutlined, LockOutlined } from '@ant-design/icons';
+import { Form, Input, Button, Modal, Typography } from 'antd';
+import { MailOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons';
 import AuthContext from '../../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAtom } from 'jotai';
+import { ForgotPasswordVisible, ResetPasswordVisible } from '../shared/atoms';
 
 const { Title, Text } = Typography;
 
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
-  const [isForgotPasswordVisible, setForgotPasswordVisible] = useState(false);
-  const [isResetPasswordVisible, setResetPasswordVisible] = useState(false);
+  const [isForgotPasswordVisible, setForgotPasswordVisible] = useAtom(
+    ForgotPasswordVisible,
+  );
+  const [isResetPasswordVisible, setResetPasswordVisible] =
+    useAtom(ResetPasswordVisible);
   const [email, setEmail] = useState<string>('');
   const [resetForm] = Form.useForm();
   const { loginUser, handleForgotPassword, handleForgotPasswordConfirm } =
@@ -20,10 +25,9 @@ const Login: React.FC = () => {
     try {
       setLoading(true);
       await loginUser(values.email, values.password);
-      navigate('/');
+      navigate('/personal');
     } catch (error) {
       console.error('Login error:', error);
-      message.error('Login failed!');
     } finally {
       setLoading(false);
     }
@@ -36,12 +40,8 @@ const Login: React.FC = () => {
   const handleForgotPasswordSubmit = async () => {
     try {
       await handleForgotPassword(email);
-      message.success('Password reset code has been sent to your email.');
-      setForgotPasswordVisible(false);
-      setResetPasswordVisible(true);
     } catch (error) {
       console.error('Forgot password error:', error);
-      message.error('Failed to send password reset email.');
     }
   };
 
@@ -52,11 +52,8 @@ const Login: React.FC = () => {
         values.newPassword,
         values.newPasswordConfirm,
       );
-      message.success('Password has been reset successfully.');
-      setResetPasswordVisible(false);
     } catch (error) {
       console.error('Reset password error:', error);
-      message.error('Failed to reset the password.');
     }
   };
 
@@ -108,6 +105,7 @@ const Login: React.FC = () => {
               className="w-full bg-blue-500 hover:bg-blue-600 text-white"
               size="large"
               loading={loading}
+              icon={<LoginOutlined />}
               block
             >
               Войти
@@ -188,6 +186,14 @@ const Login: React.FC = () => {
                 required: true,
                 message: 'Пожалуйста, подтвердите новый пароль!',
               },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('newPassword') === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('Пароли не совпадают!'));
+                },
+              }),
             ]}
           >
             <Input.Password placeholder="Подтвердите новый пароль" />

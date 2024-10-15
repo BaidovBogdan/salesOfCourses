@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { AuthProvider } from './context/AuthContext.tsx';
 import App from './app/App.tsx';
 import './index.css';
+import './i18n';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
